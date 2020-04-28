@@ -1,0 +1,39 @@
+{
+  "name": "spacetab-io/wkhtmltopdf",
+  "description": "Non-blocking PHP wrapper for wkhtmltopdf built with AMP.",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "roquie",
+      "email": "roquie0@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "amphp/byte-stream": "^1.7",
+    "amphp/process": "^1.1",
+    "league/uri": "^6.2",
+    "psr/log": "^1.1"
+  },
+  "require-dev": {
+    "amphp/file": "^1.0",
+    "amphp/phpunit-util": "^1.3",
+    "phpstan/phpstan": "^0.12.5",
+    "phpunit/phpunit": "^9",
+    "symfony/var-dumper": "^5.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Spacetab\\WkHTML\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Spacetab\\Tests\\WkHTML\\": "tests"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
+}
