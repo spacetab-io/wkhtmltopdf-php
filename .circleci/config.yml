@@ -45,7 +45,6 @@ jobs:
       - run: vendor/bin/phpstan analyse src --level 6
 
       # run tests!
-      - run: docker-php-ext-install xdebug
       - run: vendor/bin/phpunit --coverage-clover=coverage.xml
       - run: apk add bash
       - run: bash -c "bash <(curl -s https://codecov.io/bash)"
