@@ -30,7 +30,7 @@ jobs:
   test:
     docker:
     # specify the version you desire here
-      - image: spacetabio/amphp-alpine:7.4-wkhtmltopdf-1.0.1a
+      - image: spacetabio/amphp-alpine:7.4-wkhtmltopdf-xdebug-1.0.0
 
     working_directory: ~/repo
 
@@ -45,6 +45,7 @@ jobs:
       - run: vendor/bin/phpstan analyse src --level 6
 
       # run tests!
+      - run: docker-php-ext-install xdebug
       - run: vendor/bin/phpunit --coverage-clover=coverage.xml
       - run: apk add bash
       - run: bash -c "bash <(curl -s https://codecov.io/bash)"
