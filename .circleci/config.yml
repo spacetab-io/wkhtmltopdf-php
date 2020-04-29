@@ -30,7 +30,7 @@ jobs:
   test:
     docker:
     # specify the version you desire here
-      - image: spacetabio/amphp-alpine:7.4-wkhtmltopdf-1.0.1
+      - image: spacetabio/amphp-alpine:7.4-wkhtmltopdf-1.0.1a
 
     working_directory: ~/repo
 
