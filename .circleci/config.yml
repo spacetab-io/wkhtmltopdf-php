@@ -53,4 +53,5 @@ workflows:
   test_app:
     jobs:
       - deps
-      - test
+      test:
+        requires: deps
