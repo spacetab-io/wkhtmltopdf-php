@@ -55,4 +55,4 @@ workflows:
       - deps
       test:
         requires:
-          - name: deps
+          - deps
