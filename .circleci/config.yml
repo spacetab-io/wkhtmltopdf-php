@@ -54,4 +54,5 @@ workflows:
     jobs:
       - deps
       test:
-        requires: deps
+        requires:
+          - name: deps
