@@ -20,6 +20,10 @@ abstract class AbstractFormat
     protected ?LoggerInterface $logger;
 
     protected string $binaryPath;
+
+    /**
+     * @var array<string, string>
+     */
     protected array $environment = [];
 
     /**
@@ -36,6 +40,7 @@ abstract class AbstractFormat
 
     public static function new(): self
     {
+        // @phpstan-ignore-next-line
         return new static(new DefaultOptionGroup());
     }
 
@@ -53,7 +58,7 @@ abstract class AbstractFormat
     /**
      * Generates pdf or image from URL.
      *
-     * @param $url
+     * @param UriInterface|string $url
      * @return \Spacetab\WkHTML\Runner
      */
     public function fromUrl($url): Runner
@@ -77,6 +82,10 @@ abstract class AbstractFormat
         $this->binaryPath = $path;
     }
 
+    /**
+     * @param UriInterface|string $htmlOrUrl
+     * @return \Spacetab\WkHTML\Runner
+     */
     private function createRunner($htmlOrUrl): Runner
     {
         $runner = new Runner($htmlOrUrl, $this->binaryPath, $this->optionBuilder, $this->environment);
@@ -88,6 +97,10 @@ abstract class AbstractFormat
         return $runner;
     }
 
+    /**
+     * @param callable|OptionBuilderInterface|OptionGroupInterface $options
+     * @return \Spacetab\WkHTML\OptionBuilder\OptionBuilderInterface
+     */
     private function resolveOptions($options): OptionBuilderInterface
     {
         if ($options instanceof OptionBuilderInterface) {

@@ -6,13 +6,21 @@ namespace Spacetab\WkHTML\OptionBuilder;
 
 abstract class AbstractOptionBuilder implements OptionBuilderInterface
 {
+    /**
+     * @var array<string, mixed>
+     */
     protected array $options = [];
 
+    /**
+     * @param string $key
+     * @param mixed ...$value
+     */
     public function addOption(string $key, ...$value): void
     {
         $this->options[$key] = $value ? join(' ', $value) : true;
     }
 
+    /** @inheritDoc */
     public function getOptions(): array
     {
         return $this->options;

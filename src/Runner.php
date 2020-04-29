@@ -23,10 +23,17 @@ final class Runner implements LoggerAwareInterface
 
     private const MASKED_OUTPUT = '\'[MASKED HTML]\'';
 
+    /**
+     * @var UriInterface|string
+     */
     private $htmlOrUrl;
-    private string $binaryPath;
-    private array  $environment;
 
+    /**
+     * @var array<string, string>
+     */
+    private array $environment;
+
+    private string $binaryPath;
     private OptionBuilderInterface $optionBuilder;
 
     /**
@@ -35,7 +42,7 @@ final class Runner implements LoggerAwareInterface
      * @param \Psr\Http\Message\UriInterface|string $htmlOrUrl
      * @param string $binaryPath
      * @param \Spacetab\WkHTML\OptionBuilder\OptionBuilderInterface $optionBuilder
-     * @param array $environment
+     * @param array<string, string> $environment
      */
     public function __construct(
         $htmlOrUrl,
@@ -59,6 +66,7 @@ final class Runner implements LoggerAwareInterface
      */
     public function asFile(string $path): Promise
     {
+        // @phpstan-ignore-next-line
         return call(fn() => yield from $this->runCommand($path));
     }
 
@@ -69,6 +77,7 @@ final class Runner implements LoggerAwareInterface
      */
     public function asString(): Promise
     {
+        // @phpstan-ignore-next-line
         return call(fn() => yield from $this->runCommand());
     }
 
@@ -76,7 +85,7 @@ final class Runner implements LoggerAwareInterface
      * Runs command and handle the error if happened.
      *
      * @param string|null $path
-     * @return \Generator
+     * @return Generator<Promise>
      */
     private function runCommand(?string $path = null): Generator
     {
@@ -132,7 +141,7 @@ final class Runner implements LoggerAwareInterface
         );
     }
 
-    private function getCommandToCreateSomething(?string $path = null, bool $masquerade = false)
+    private function getCommandToCreateSomething(?string $path = null, bool $masquerade = false): string
     {
         $command = "echo {$this->getTrustedHtmlOrUrl($masquerade)} | {$this->getTrustedBinary()} {$this->getTrustedOptions()} -";
 

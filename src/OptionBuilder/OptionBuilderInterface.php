@@ -6,5 +6,8 @@ namespace Spacetab\WkHTML\OptionBuilder;
 
 interface OptionBuilderInterface
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function getOptions(): array;
 }
