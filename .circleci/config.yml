@@ -46,7 +46,7 @@ jobs:
 
       # run tests!
       - run: vendor/bin/phpunit --coverage-clover=coverage.xml
-      - run: apk add bash && bash <(curl -s https://codecov.io/bash)
+      - run: apk add bash && bash -c "bash <(curl -s https://codecov.io/bash)"
 
 workflows:
   version: 2
