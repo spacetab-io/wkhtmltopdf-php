@@ -52,7 +52,7 @@ workflows:
   version: 2
   test_app:
     jobs:
-      - deps
+      deps:
       test:
         requires:
           - deps
