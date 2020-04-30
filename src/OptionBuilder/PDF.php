@@ -471,22 +471,18 @@ final class PDF extends AbstractOptionBuilder
 
     /**
      * Display line below the header
-     *
-     * @param string $value
      */
-    public function addHeaderLine(string $value): void
+    public function addHeaderLine(): void
     {
-        $this->addOption('--header-line', $value);
+        $this->addOption('--header-line');
     }
 
     /**
      * Do not display line below the header
-     *
-     * @param string $value
      */
-    public function addNoHeaderLine(string $value): void
+    public function addNoHeaderLine(): void
     {
-        $this->addOption('--no-header-line', $value);
+        $this->addOption('--no-header-line');
     }
 
     /**

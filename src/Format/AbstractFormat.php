@@ -29,12 +29,12 @@ abstract class AbstractFormat
     /**
      * AbstractFormat constructor.
      *
-     * @param OptionBuilderInterface|OptionGroupInterface $options
+     * @param OptionBuilderInterface|OptionGroupInterface|Closure $options
      * @param \Psr\Log\LoggerInterface|null $logger
      */
-    public function __construct($options, ?LoggerInterface $logger = null)
+    public function __construct($options = null, ?LoggerInterface $logger = null)
     {
-        $this->optionBuilder = $this->resolveOptions($options);
+        $this->optionBuilder = $this->resolveOptions($options ?: new DefaultOptionGroup());
         $this->logger        = $logger;
     }
 
