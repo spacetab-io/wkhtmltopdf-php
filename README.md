@@ -4,7 +4,34 @@ Non-blocking WkHTMLtoPDF
 [![CircleCI](https://circleci.com/gh/spacetab-io/wkhtmltopdf-php/tree/master.svg?style=svg)](https://circleci.com/gh/spacetab-io/wkhtmltopdf-php/tree/master)
 [![codecov](https://codecov.io/gh/spacetab-io/wkhtmltopdf-php/branch/master/graph/badge.svg)](https://codecov.io/gh/spacetab-io/wkhtmltopdf-php)
 
-Non-blocking PHP wrapper for `wkhtmltopdf` and `wkhtmltoimage` built with AMP.
+Non-blocking PHP wrapper for `wkhtmltopdf` and `wkhtmltoimage` built with [AMP](https://amphp.org).
+
+## Table of contents
+
+* [Features](#features)
+* [Why?](#why)
+* [Installation](#installation)
+* Usage
+    + [On your machine](#on-your-machine)
+        - [Simple cases](#simple-cases)
+        - [Parallel](#parallel)
+        - [Option Groups](#option-groups)
+    + [Docker](#docker)
+* [License](#license)
+
+## Features
+
+* An elegant interface to usage
+* Create PDF files from HTML or URI strings
+* Create Image files from HTML or URI string
+* Faster than others because can be run in parallel (native)
+* In-the-box your can use `OptionGroup` feature to group options for different cases  
+
+## Why
+
+Existing wrappers are slow, uses blocking API and does not have a normal object-oriented interface (for options).
+
+It prevents to write fast and more elegant programming code. 
 
 ## Installation
 
@@ -13,6 +40,11 @@ composer require spacetab-io/wkhtmltopdf
 ```
 
 ## Usage
+
+### On your machine
+#### Simple cases
+
+1. Create a PDF file from HTML string and save it to current directory:
 
 ```php
 use Amp\Loop;
@@ -23,7 +55,18 @@ Loop::run(static fn() =>
 );
 ```
 
-## Parallel sample
+2. Create a PDF file from URI and save it to current directory:
+
+```php
+use Amp\Loop;
+use Spacetab\WkHTML;
+
+Loop::run(static fn() => 
+  yield WkHTML\ToPDF::new()->fromUrl('https://google.com')->asFile('google.pdf')
+);
+```
+
+3. Create a PDF file with custom options:
 
 ```php
 use Amp\Loop;
@@ -31,31 +74,70 @@ use Spacetab\WkHTML;
 use Spacetab\WkHTML\OptionBuilder;
 
 Loop::run(static function () {
-    $option = new OptionBuilder\PDF();
-    $option->addGrayscale();
+  $option = new OptionBuilder\PDF();
+  $option->addGrayscale();
 
-    $pdf = new WkHTML\ToPDF($option);
-
-    $urls = [
-        'https://google.com/?q=1' => 'g1',
-        'https://google.com/?q=2' => 'g2',
-        'https://google.com/?q=3' => 'g3',
-    ];
-
-    $promises = [];
-    foreach ($urls as $url => $name) {
-        $promises[] = $pdf->fromUrl($url)
-            ->asFile(__DIR__ . "/google/{$name}.pdf");
-    }
-
-    yield $promises;
+  yield WkHTML\ToPDF::new()->fromUrl('https://google.com')->asFile('google.pdf');
 });
 ```
 
-## Depends
+Note: By default uses `UTF-8` encoding.
 
-* \>= PHP 7.4
-* Composer for install package
+#### Parallel
+
+It simple! Right?
+
+```php
+Loop::run(static fn() =>
+    yield [
+        WkHTML\ToPDF::new()->fromHtml('<p>hi1</p>')->asFile('hi1.pdf'),
+        WkHTML\ToPDF::new()->fromHtml('<p>hi2</p>')->asFile('hi2.pdf'),
+        WkHTML\ToPDF::new()->fromHtml('<p>hi3</p>')->asFile('hi3.pdf'),
+    ]
+);
+```
+
+#### Option Groups
+
+So, if you work with many reports or create PDF files with set of different options 
+you can be attempt to use option groups. Sample:
+
+```php
+use Amp\Loop;
+use Spacetab\WkHTML;
+use Spacetab\WkHTML\OptionBuilder;
+use Spacetab\WkHTML\OptionBuilder\OptionBuilderInterface;
+use Spacetab\WkHTML\OptionGroup\OptionGroupInterface;
+
+Loop::run(static function () {
+    $pdf = new WkHTML\ToPDF(new class implements OptionGroupInterface {
+        public function __invoke(): OptionBuilderInterface {
+            $option = new OptionBuilder\PDF();
+            $option->addGrayscale();
+
+            return $option;
+        }
+    });
+
+    yield $pdf->fromHtml('https://google.com')->asFile('google.pdf');
+});
+```   
+
+### Docker
+
+For usage in Docker your can like to use this image:
+https://github.com/spacetab-io/docker-amphp-php
+
+```Dockerfile
+FROM spacetabio/amphp-alpine:7.4-wkhtmltopdf-1.1.0
+
+COPY * /app
+
+# cli commands should be created in the responsible service. 
+CMD ["bin/service", "run"]
+```
+
+This library tested in Docker container above in Circle CI.
 
 ## License
 

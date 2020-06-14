@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Spacetab\WkHTML;
 
+use Amp\Loop;
 use Amp\Process\Process;
 use Amp\Promise;
 use Amp\ByteStream;
@@ -16,25 +17,25 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 use Spacetab\WkHTML\OptionBuilder\OptionBuilderInterface;
 use function Amp\call;
+use Amp\File;
 
 final class Runner implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    private const MASKED_OUTPUT = '\'[MASKED HTML]\'';
+    private const TMP_FILE_PREFIX = 'spacetab-io-wkhtmltopdf-tmp-';
 
-    /**
-     * @var UriInterface|string
-     */
+    /** @var UriInterface|string */
     private $htmlOrUrl;
 
-    /**
-     * @var array<string, string>
-     */
+    /** @var array<string, string> */
     private array $environment;
 
     private string $binaryPath;
     private OptionBuilderInterface $optionBuilder;
+
+    /** @var array<string> */
+    private array $usedTemporaryPaths = [];
 
     /**
      * Runner constructor.
@@ -67,7 +68,10 @@ final class Runner implements LoggerAwareInterface
     public function asFile(string $path): Promise
     {
         // @phpstan-ignore-next-line
-        return call(fn() => yield from $this->runCommand($path));
+        return call(fn() =>
+            // @phpstan-ignore-next-line
+            yield from $this->runCommand($path, strlen($path) < 1 ? null : yield from $this->writeTemporaryFile())
+        );
     }
 
     /**
@@ -78,29 +82,33 @@ final class Runner implements LoggerAwareInterface
     public function asString(): Promise
     {
         // @phpstan-ignore-next-line
-        return call(fn() => yield from $this->runCommand());
+        return call(fn() => yield from $this->runCommand(
+            // @phpstan-ignore-next-line
+            null, yield from $this->writeTemporaryFile()
+        ));
     }
 
     /**
      * Runs command and handle the error if happened.
      *
      * @param string|null $path
+     * @param string|null $temporary
      * @return Generator<Promise>
      */
-    private function runCommand(?string $path = null): Generator
+    private function runCommand(?string $path = null, ?string $temporary = null): Generator
     {
-        $masquerade = $this->htmlOrUrl instanceof UriInterface;
-
-        $this->logger->info("Run command: {$this->getCommandToCreateSomething($path, !$masquerade)}", [
+        $this->logger->info("Run command: {$this->getCommandToCreateSomething($path, $temporary)}", [
             'Environment' => $this->environment
         ]);
 
-        $process = new Process($this->getCommandToCreateSomething($path), null, $this->environment);
+        $process = new Process($this->getCommandToCreateSomething($path, $temporary), null, $this->environment);
         yield $process->start();
 
         $stdout = yield ByteStream\buffer($process->getStdout());
         $stderr = yield ByteStream\buffer($process->getStderr());
         $code   = yield $process->join();
+
+        $this->defineCleaner();
 
         if ($code !== 0) {
             throw new Error($stderr, $code);
@@ -130,20 +138,21 @@ final class Runner implements LoggerAwareInterface
         return escapeshellarg($this->binaryPath);
     }
 
-    private function getTrustedHtmlOrUrl(bool $masquerade = false): string
+    private function getTrustedHtmlOrUrl(): string
     {
-        if ($masquerade) {
-            return self::MASKED_OUTPUT;
+        if ($this->htmlOrUrl instanceof UriInterface) {
+            return escapeshellarg(
+                (string) $this->htmlOrUrl
+            );
         }
 
-        return escapeshellarg(
-            (string) $this->htmlOrUrl
-        );
+        return $this->htmlOrUrl;
     }
 
-    private function getCommandToCreateSomething(?string $path = null, bool $masquerade = false): string
+    private function getCommandToCreateSomething(?string $path = null, ?string $temporary = null): string
     {
-        $command = "echo {$this->getTrustedHtmlOrUrl($masquerade)} | {$this->getTrustedBinary()} {$this->getTrustedOptions()} -";
+        $temporary = is_null($temporary) ? '' : escapeshellarg($temporary);
+        $command   = "{$this->getTrustedBinary()} {$this->getTrustedOptions()} {$temporary}";
 
         if ($this->htmlOrUrl instanceof UriInterface) {
             $command = "{$this->getTrustedBinary()} {$this->getTrustedOptions()} {$this->getTrustedHtmlOrUrl()}";
@@ -163,5 +172,45 @@ final class Runner implements LoggerAwareInterface
         $this->logger->info("Save file: {$filename} to disk");
 
         return "mkdir -p {$path['dirname']} && {$command} {$filename}";
+    }
+
+    private function defineCleaner(): void
+    {
+        Loop::defer(function () {
+            $promises = [];
+            foreach ($this->usedTemporaryPaths as $path) {
+                $promises[] = File\unlink($path);
+            }
+
+            yield $promises;
+
+            $this->usedTemporaryPaths = [];
+        });
+    }
+
+    private function getTemporaryPath(): string
+    {
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid(self::TMP_FILE_PREFIX) . '.html';
+
+        $this->usedTemporaryPaths[] = $path;
+
+        return $path;
+    }
+
+    /**
+     * Writes a temporary file.
+     *
+     * @return Generator<string|mixed>
+     */
+    private function writeTemporaryFile(): Generator
+    {
+        $path = $this->getTemporaryPath();
+
+        /** @var File\Handle $file */
+        $file = yield File\open($path, 'c');
+        yield $file->write($this->getTrustedHtmlOrUrl());
+        yield $file->close();
+
+        return $path;
     }
 }
