@@ -69,7 +69,6 @@ final class Runner implements LoggerAwareInterface
     {
         // @phpstan-ignore-next-line
         return call(fn() =>
-            // @phpstan-ignore-next-line
             yield from $this->runCommand($path, strlen($path) < 1 ? null : yield from $this->writeTemporaryFile())
         );
     }
@@ -83,7 +82,6 @@ final class Runner implements LoggerAwareInterface
     {
         // @phpstan-ignore-next-line
         return call(fn() => yield from $this->runCommand(
-            // @phpstan-ignore-next-line
             null, yield from $this->writeTemporaryFile()
         ));
     }
