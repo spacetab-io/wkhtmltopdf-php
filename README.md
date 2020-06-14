@@ -119,7 +119,7 @@ Loop::run(static function () {
         }
     });
 
-    yield $pdf->fromHtml('https://google.com')->asFile('google.pdf');
+    yield $pdf->fromUrl('https://google.com')->asFile('google.pdf');
 });
 ```   
 
